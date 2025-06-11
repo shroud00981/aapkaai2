@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AapkaAI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: monospace;
+      background-color: #0a0a0a;
+      background-image: url('https://i.imgur.com/rPxEvkY.gif'); /* Hacker animation */
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      color: #00ffee;
+      height: 100vh;
+      overflow-y: scroll;
+    }
+    .overlay {
+      background: rgba(0, 0, 0, 0.85);
+      min-height: 100vh;
+      width: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .timer {
+      position: fixed;
+      top: 10px;
+      right: 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #ff6b6b;
+      z-index: 50;
+    }
+    .welcome {
+      position: fixed;
+      top: 10px;
+      left: 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #00ff88;
+      z-index: 50;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="timer" id="sessionTimer">Session time left: 120:00</div>
+  <div class="welcome">Welcome, Shroud</div>
+
+  <div class="min-h-screen flex flex-col items-center py-10 px-4 relative z-10">
+    <h1 class="text-4xl font-bold mb-8">AapkaAI ☠️</h1>
+
+    <div class="flex gap-4 flex-wrap justify-center mb-6">
+      <button onclick="prefill('I need help writing a resume. What job is it for?')" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded">✍️ Resume Generator</button>
+      <button onclick="prefill('Help with an assignment. What is the topic?')" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded">📚 Assignment Helper</button>
+      <button onclick="prefill('Write an email or DM. Who is it for and what is the message?')" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded">📝 Email/DM Writer</button>
+      <button onclick="prefill('Translate something. What language and what sentence?')" class="bg-gray-800 hover:bg-gray-700 px-4 py-2 rounded">🌐 Translator</button>
+    </div>
+
+    <textarea id="inputText" class="w-full max-w-2xl h-32 p-4 rounded bg-gray-900 border border-gray-700 text-white resize-none" placeholder="Ask something..."></textarea>
+    <button onclick="sendMessage()" class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded mt-4">Send</button>
+
+    <div id="output" class="bg-gray-900 p-4 rounded w-full max-w-2xl mt-6 border border-gray-700 whitespace-pre-wrap min-h-[100px]">Your responses will appear here...</div>
+  </div>
+
+  <script>
+    function prefill(text) {
+      document.getElementById("inputText").value = text;
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById("inputText").value.trim();
+      const outputDiv = document.getElementById("output");
+      outputDiv.innerHTML = "Thinking... 🤔";
+
+      if (!input) {
+        outputDiv.innerHTML = "Please enter a message.";
+        return;
+      }
+
+      try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer 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",
+            "HTTP-Referer": "http://localhost",
+            "X-Title": "AapkaAI"
+          },
+          body: JSON.stringify({
+            model: "mistralai/mistral-7b-instruct",
+            messages: [
+              { role: "system", content: "You are AapkaAI, a helpful assistant." },
+              { role: "user", content: input }
+            ]
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          outputDiv.innerHTML = `Error ${response.status}: ${JSON.stringify(data)}`;
+          return;
+        }
+
+        const reply = data.choices[0].message.content;
+        outputDiv.innerHTML = reply;
+
+      } catch (error) {
+        outputDiv.innerHTML = "Request failed: " + error.message;
+      }
+    }
+
+    // Session Timer (120 mins)
+    let timeLeft = 120 * 60;
+    const timerDisplay = document.getElementById("sessionTimer");
+
+    setInterval(() => {
+      if (timeLeft <= 0) {
+        alert("Session expired. Please log in again.");
+        window.location.href = "index.html";
+      }
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      timerDisplay.textContent = `Session time left: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      timeLeft--;
+    }, 1000);
+  </script>
+</body>
+</html>
